@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seaview Marketplace - Business Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .sidebar-item { transition: all 0.2s ease; }
+        .sidebar-item:hover { background-color: rgba(59, 130, 246, 0.1); }
+        .sidebar-item.active { background-color: rgba(59, 130, 246, 0.15); border-right: 3px solid #3b82f6; }
+        .card { transition: all 0.2s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .modal { animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .toast { animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        input:focus, select:focus, textarea:focus { outline: none; ring: 2px; ring-color: #3b82f6; }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .btn-primary:hover { background: linear-gradient(135deg, #2563eb, #1e40af); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .hidden-section { display: none !important; }
+        .loading { opacity: 0.6; pointer-events: none; }
+        .sync-indicator { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Setup Screen (First Time Only) -->
+    <div id="setupScreen" class="hidden min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-green-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">Supabase Setup</h1>
+                <p class="text-gray-500 mt-1">Connect your free Supabase database</p>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold text-blue-800 mb-2">How to get your Supabase credentials:</h3>
+                <ol class="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                    <li>Go to <a href="https://supabase.com" target="_blank" class="underline">supabase.com</a> and create a free account</li>
+                    <li>Create a new project</li>
+                    <li>Go to Project Settings > API</li>
+                    <li>Copy your Project URL and anon/public key</li>
+                </ol>
+            </div>
+            <form id="setupForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Supabase Project URL</label>
+                    <input type="url" id="https://xycdjijehthghspcnwlh.supabase.co" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://xxxxx.supabase.co">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Supabase Anon Key</label>
+                    <input type="text" id="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5Y2RqaWplaHRoZ2hzcGNud2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjIwNzMsImV4cCI6MjA5NTI5ODA3M30.8n197AIPjs1uVxBWYlAWqZzQNzzqM3GHgr6cUFCWf_Q" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                </div>
+                <button type="submit" class="w-full btn-primary text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+                    Connect & Initialize Database
+                </button>
+            </form>
+            <button onclick="skipSetup()" class="w-full mt-3 text-gray-500 hover:text-gray-700 text-sm py-2">
+                Use Local Storage Only (Not Recommended)
+            </button>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="hidden min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">Seaview Marketplace</h1>
+                <p class="text-gray-500 mt-1">Business Management System</p>
+                <div id="syncStatus" class="mt-2 text-xs text-green-600 hidden">
+                    <span class="sync-indicator inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                    Connected to Cloud
+                </div>
+            </div>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="loginEmail" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter email">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="loginPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter password">
+                </div>
+                <button type="submit" class="w-full btn-primary text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+                    Sign In
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <button onclick="showRegister()" class="text-blue-600 hover:underline text-sm">Create new account</button>
+            </div>
+            <div id="demoCredentials" class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <p class="text-xs text-gray-500 text-center">First time? Create an admin account to get started.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Screen -->
+    <div id="registerScreen" class="hidden min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-800">Create Account</h1>
+                <p class="text-gray-500 mt-1">Set up your Seaview account</p>
+            </div>
+            <form id="registerForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="regName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your name">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="regEmail" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter email">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="regPassword" required minlength="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Min 6 characters">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <select id="regRole" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="admin">Admin (Full Access)</option>
+                        <option value="employee">Employee (Limited Access)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full btn-primary text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+                    Create Account
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <button onclick="showLogin()" class="text-blue-600 hover:underline text-sm">Back to login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40 transform transition-transform duration-300">
+            <div class="p-6 border-b">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-gray-800">Seaview</h2>
+                        <p class="text-xs text-gray-500">Marketplace</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="p-4">
+                <ul class="space-y-1">
+                    <li class="nav-dashboard admin-only">
+                        <a href="#" onclick="showPage('dashboard')" class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700" data-page="dashboard">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-sales">
+                        <a href="#" onclick="showPage('sales')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700" data-page="sales">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Daily Sales
+                        </a>
+                    </li>
+                    <li class="nav-sandwiches">
+                        <a href="#" onclick="showPage('sandwiches')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700" data-page="sandwiches">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z"></path></svg>
+                            Sandwich Sales
+                        </a>
+                    </li>
+                    <li class="nav-vendors">
+                        <a href="#" onclick="showPage('vendors')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700" data-page="vendors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            Vendors
+                        </a>
+                    </li>
+                    <li class="nav-expenses">
+                        <a href="#" onclick="showPage('expenses')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700" data-page="expenses">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"></path></svg>
+                            Expenses
+                        </a>
+                    </li>
+                    <li class="nav-payroll">
+                        <a href="#" onclick="showPage('payroll')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700" data-page="payroll">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            Payroll
+                        </a>
+                    </li>
+                    <li class="nav-projections admin-only">
+                        <a href="#" onclick="showPage('projections')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700" data-page="projections">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            Projections
+                        </a>
+                    </li>
+                    <li class="nav-reports">
+                        <a href="#" onclick="showPage('reports')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700" data-page="reports">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Reports
+                        </a>
+                    </li>
+                    <li class="nav-settings admin-only">
+                        <a href="#" onclick="showPage('settings')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700" data-page="settings">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="absolute bottom-0 left-0 right-0 p-4 border-t">
+                <div id="connectionStatus" class="flex items-center gap-2 text-xs text-gray-500">
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span>Cloud Connected</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="ml-64 min-h-screen">
+            <!-- Top Header -->
+            <header class="bg-white shadow-sm sticky top-0 z-30">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <div>
+                        <h1 id="pageTitle" class="text-xl font-semibold text-gray-800">Dashboard</h1>
+                        <p id="pageSubtitle" class="text-sm text-gray-500">Welcome back!</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span id="currentDate" class="text-sm text-gray-500"></span>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                <p id="userName" class="text-sm font-medium text-gray-700"></p>
+                                <p id="userRole" class="text-xs text-gray-500"></p>
+                            </div>
+                            <button onclick="logout()" class="p-2 rounded-lg hover:bg-red-50 text-red-600" title="Logout">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content Container -->
+            <div id="pageContent" class="p-6">
+                <!-- Dashboard Page -->
+                <div id="dashboardPage" class="page">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="card bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">Today's Gross Sales</p>
+                                    <p id="todayGrossSales" class="text-2xl font-bold text-gray-800 mt-1">$0.00</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">Monthly Net Sales</p>
+                                    <p id="monthlyNetSales" class="text-2xl font-bold text-gray-800 mt-1">$0.00</p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Expenses</p>
+                                    <p id="totalExpenses" class="text-2xl font-bold text-gray-800 mt-1">$0.00</p>
+                                </div>
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">Net Profit</p>
+                                    <p id="netProfit" class="text-2xl font-bold text-gray-800 mt-1">$0.00</p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Sales Overview (Last 7 Days)</h3>
+                            <canvas id="salesChart" height="200"></canvas>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Expense Breakdown</h3>
+                            <canvas id="expenseChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Sales Page -->
+                <div id="salesPage" class="page hidden">
+                    <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                        <div class="flex items-center gap-4">
+                            <select id="salesMonthFilter" onchange="loadSales()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Months</option>
+                            </select>
+                            <select id="salesYearFilter" onchange="loadSales()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Years</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="exportSalesToExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Export Excel
+                            </button>
+                            <button onclick="openModal('salesModal')" class="px-4 py-2 btn-primary text-white rounded-lg flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Add Sale
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Monthly Summary -->
+                    <div id="monthlySummary" class="bg-blue-50 rounded-xl p-4 mb-6 hidden">
+                        <h3 class="font-semibold text-blue-800 mb-3">Monthly Summary</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-sm">
+                            <div><span class="text-blue-600">Total Cash:</span> <span id="sumCash" class="font-semibold">$0</span></div>
+                            <div><span class="text-blue-600">Total Credit:</span> <span id="sumCredit" class="font-semibold">$0</span></div>
+                            <div><span class="text-blue-600">Gross Balance:</span> <span id="sumGrossBal" class="font-semibold">$0</span></div>
+                            <div><span class="text-blue-600">Sandwich Total:</span> <span id="sumSandwich" class="font-semibold">$0</span></div>
+                            <div><span class="text-blue-600">Gross Sales:</span> <span id="sumGSale" class="font-semibold">$0</span></div>
+                            <div><span class="text-blue-600">Net Sales:</span> <span id="sumNSale" class="font-semibold">$0</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Day</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Cash</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Credit</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gross Bal</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Sand #</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Sand $</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tax 1</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tax 2</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">N Tax</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">G Sale</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">N Sale</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="salesTableBody" class="divide-y divide-gray-100">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sandwich Sales Page -->
+                <div id="sandwichesPage" class="page hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-4">
+                            <input type="date" id="sandwichDateFilter" onchange="loadSandwiches()" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <button onclick="openModal('sandwichModal')" class="px-4 py-2 btn-primary text-white rounded-lg flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Sandwich Sale
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Amount</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sandwichTableBody" class="divide-y divide-gray-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Vendors Page -->
+                <div id="vendorsPage" class="page hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-semibold text-gray-800">Vendor Management</h2>
+                        <button onclick="openModal('vendorModal')" class="px-4 py-2 btn-primary text-white rounded-lg flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Vendor
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor Name</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Week 1</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Week 2</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Week 3</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Week 4</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vendorTableBody" class="divide-y divide-gray-100">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expenses Page -->
+                <div id="expensesPage" class="page hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-4">
+                            <input type="month" id="expenseMonthFilter" onchange="loadExpenses()" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <button onclick="openModal('expenseModal')" class="px-4 py-2 btn-primary text-white rounded-lg flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Expense
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason/Vendor</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount Paid</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenseTableBody" class="divide-y divide-gray-100">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <p class="text-lg font-semibold">Total Expenses: <span id="totalExpenseSum" class="text-red-600">$0.00</span></p>
+                    </div>
+                </div>
+
+                <!-- Payroll Page -->
+                <div id="payrollPage" class="page hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-4">
+                            <input type="month" id="payrollMonthFilter" onchange="loadPayroll()" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <button onclick="openModal('payrollModal')" class="px-4 py-2 btn-primary text-white rounded-lg flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Payroll Entry
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Pay Rate</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Cash Hours</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Cash Pay</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Check Hours</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Check Pay</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Pay</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payrollTableBody" class="divide-y divide-gray-100">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <p class="text-lg font-semibold">Total Payroll: <span id="totalPayrollSum" class="text-blue-600">$0.00</span></p>
+                    </div>
+                </div>
+
+                <!-- Projections Page -->
+                <div id="projectionsPage" class="page hidden">
+                    <div class="mb-6">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-2">Financial Projections</h2>
+                        <p class="text-sm text-gray-500">Comparing Last Month vs Current Month vs Next Month (Projected)</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 id="lastMonthTitle" class="text-lg font-semibold text-gray-600 mb-4">Last Month</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between"><span class="text-gray-500">Gross Sales:</span><span id="lastGross" class="font-semibold">$0</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Net Sales:</span><span id="lastNet" class="font-semibold">$0</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Expenses:</span><span id="lastExpenses" class="font-semibold text-red-600">$0</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Profit:</span><span id="lastProfit" class="font-semibold text-green-600">$0</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-blue-50 rounded-xl p-6 shadow-sm border border-blue-200">
+                            <h3 id="currentMonthTitle" class="text-lg font-semibold text-blue-800 mb-4">Current Month</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between"><span class="text-blue-600">Gross Sales:</span><span id="currentGross" class="font-semibold">$0</span></div>
+                                <div class="flex justify-between"><span class="text-blue-600">Net Sales:</span><span id="currentNet" class="font-semibold">$0</span></div>
+                                <div class="flex justify-between"><span class="text-blue-600">Expenses:</span><span id="currentExpenses" class="font-semibold text-red-600">$0</span></div>
+                                <div class="flex justify-between"><span class="text-blue-600">Profit:</span><span id="currentProfit" class="font-semibold text-green-600">$0</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-green-50 rounded-xl p-6 shadow-sm border border-green-200">
+                            <h3 id="nextMonthTitle" class="text-lg font-semibold text-green-800 mb-4">Next Month (Projected)</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between"><span class="text-green-600">Gross Sales:</span><span id="nextGross" class="font-semibold">$0</span></div>
+                                <div class="flex justify-between"><span class="text-green-600">Net Sales:</span><span id="nextNet" class="font-semibold">$0</span></div>
+                                <div class="flex justify-between"><span class="text-green-600">Expenses:</span><span id="nextExpenses" class="font-semibold text-red-600">$0</span></div>
+                                <div class="flex justify-between"><span class="text-green-600">Profit:</span><span id="nextProfit" class="font-semibold text-green-600">$0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-gray-800 mb-4">Monthly Comparison Chart</h3>
+                        <canvas id="projectionChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Reports Page -->
+                <div id="reportsPage" class="page hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Sales Report</h3>
+                            <p class="text-sm text-gray-500 mb-4">Export all sales data with monthly summaries</p>
+                            <div class="flex gap-2">
+                                <button onclick="exportSalesToExcel()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">Excel</button>
+                                <button onclick="exportSalesToPDF()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">PDF</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Vendor Report</h3>
+                            <p class="text-sm text-gray-500 mb-4">Export vendor expenses by week</p>
+                            <div class="flex gap-2">
+                                <button onclick="exportVendorsToExcel()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">Excel</button>
+                                <button onclick="exportVendorsToPDF()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">PDF</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Expense Report</h3>
+                            <p class="text-sm text-gray-500 mb-4">Export all expenses with totals</p>
+                            <div class="flex gap-2">
+                                <button onclick="exportExpensesToExcel()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">Excel</button>
+                                <button onclick="exportExpensesToPDF()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">PDF</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Payroll Report</h3>
+                            <p class="text-sm text-gray-500 mb-4">Export payroll data with totals</p>
+                            <div class="flex gap-2">
+                                <button onclick="exportPayrollToExcel()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">Excel</button>
+                                <button onclick="exportPayrollToPDF()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">PDF</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Full Business Report</h3>
+                            <p class="text-sm text-gray-500 mb-4">Complete report with all sections</p>
+                            <div class="flex gap-2">
+                                <button onclick="exportFullReport()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">Export All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div id="settingsPage" class="page hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Employee Access Control -->
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Employee Access Control</h3>
+                            <p class="text-sm text-gray-500 mb-4">Grant section access to employees (Employees always see Daily Sales)</p>
+                            <div id="employeeAccessList" class="space-y-4">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                        
+                        <!-- Database Settings -->
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="font-semibold text-gray-800 mb-4">Database Connection</h3>
+                            <div id="dbStatus" class="p-4 bg-green-50 rounded-lg mb-4">
+                                <div class="flex items-center gap-2 text-green-700">
+                                    <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                                    <span>Connected to Supabase</span>
+                                </div>
+                            </div>
+                            <button onclick="resetDatabase()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+                                Reset Database Connection
+                            </button>
+                        </div>
+
+                        <!-- Manage Users -->
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 lg:col-span-2">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold text-gray-800">Manage Users</h3>
+                                <button onclick="openModal('addUserModal')" class="px-4 py-2 btn-primary text-white rounded-lg text-sm">Add User</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTableBody" class="divide-y divide-gray-100">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Sales Modal -->
+    <div id="salesModal" class="modal fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 id="salesModalTitle" class="text-lg font-semibold">Add Daily Sale</h3>
+                <button onclick="closeModal('salesModal')" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="salesForm" class="p-6 space-y-4">
+                <input type="hidden" id="saleId">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="saleDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Day</label>
+                        <input type="text" id="saleDay" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cash</label>
+                        <input type="number" step="0.01" id="saleCash" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Credit</label>
+                        <input type="number" step="0.01" id="saleCredit" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Gross Balance (Auto)</label>
+                        <input type="number" step="0.01" id="saleGrossBal" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sandwich Count</label>
+                        <input type="number" id="saleSandCount" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sandwich $</label>
+                        <input type="number" step="0.01" id="saleSandAmount" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tax 1</label>
+                        <input type="number" step="0.01" id="saleTax1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tax 2</label>
+                        <input type="number" step="0.01" id="saleTax2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">N Tax (Auto)</label>
+                        <input type="number" step="0.01" id="saleNTax" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">G Sale (Auto)</label>
+                        <input type="number" step="0.01" id="saleGSale" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">N Sale (Auto)</label>
+                        <input type="number" step="0.01" id="saleNSale" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    </div>
+                </div>
+                <button type="submit" class="w-full btn-primary text-white py-3 rounded-lg font-semibold">Save Sale</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sandwich Modal -->
+    <div id="sandwichModal" class="modal fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-md">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 id="sandwichModalTitle" class="text-lg font-semibold">Add Sandwich Sale</h3>
+                <button onclick="closeModal('sandwichModal')" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="sandwichForm" class="p-6 space-y-4">
+                <input type="hidden" id="sandwichId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name/Description</label>
+                    <input type="text" id="sandwichName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" id="sandwichDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Quantity Sold</label>
+                        <input type="number" id="sandwichQty" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
+                        <input type="number" step="0.01" id="sandwichTotal" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <button type="submit" class="w-full btn-primary text-white py-3 rounded-lg font-semibold">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vendor Modal -->
+    <div id="vendorModal" class="modal fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-lg">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 id="vendorModalTitle" class="text-lg font-semibold">Add Vendor</h3>
+                <button onclick="closeModal('vendorModal')" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="vendorForm" class="p-6 space-y-4">
+                <input type="hidden" id="vendorId">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Vendor Name</label>
+                        <input type="text" id="vendorName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input type="tel" id="vendorPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Week 1</label>
+                        <input type="number" step="0.01" id="vendorWeek1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Week 2</label>
+                        <input type="number" step="0.01" id="vendorWeek2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Week 3</label>
+                        <input type="number" step="0.01" id="vendorWeek3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Week 4</label>
+                        <input type="number" step="0.01" id="vendorWeek4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+                    <textarea id="vendorRemarks" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <button type="submit" class="w-full btn-primary text-white py-3 rounded-lg font-semibold">Save Vendor</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div id="expenseModal" class="modal fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-md">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 id="expenseModalTitle" class="text-lg font-semibold">Add Expense</h3>
+                <button onclick="closeModal('expenseModal')" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="expenseForm" class="p-6 space-y-4">
+                <input type="hidden" id="expenseId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" id="expenseDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Reason/Vendor</label>
+                    <input type="text" id="expenseReason" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., Utility Bill, Vendor Name">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Amount Paid</label>
+                    <input type="number" step="0.01" id="expenseAmount" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full btn-primary text-white py-3 rounded-lg font-semibold">Save Expense</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payroll Modal -->
+    <div id="payrollModal" class="modal fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-lg">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 id="payrollModalTitle" class="text-lg font-semibold">Add Payroll Entry</h3>
+                <button onclick="closeModal('payrollModal')" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="payrollForm" class="p-6 space-y-4">
+                <input type="hidden" id="payrollId">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
+                        <input type="text" id="payrollName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="payrollDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pay Rate ($/hr)</label>
+                    <input type="number" step="0.01" id="payrollRate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cash Hours</label>
+                        <input type="number" step="0.5" id="payrollCashHours" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cash Pay (Auto)</label>
+                        <input type="number" step="0.01" id="payrollCashPay" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Check Hours</label>
+                        <input type="number" step="0.5" id="payrollCheckHours" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Check Pay (Auto)</label>
+                        <input type="number" step="0.01" id="payrollCheckPay" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    </div>
+                </div>
+                <button type="submit" class="w-full btn-primary text-white py-3 rounded-lg font-semibold">Save Payroll</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-md">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Add New User</h3>
+                <button onclick="closeModal('addUserModal')" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form id="addUserForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="newUserName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="newUserEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="newUserPassword" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <select id="newUserRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="employee">Employee</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full btn-primary text-white py-3 rounded-lg font-semibold">Create User</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global State
+        let supabase = null;
+        let currentUser = null;
+        let useSupabase = false;
+        let salesChart = null;
+        let expenseChart = null;
+        let projectionChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSetup();
+            initializeDateDisplay();
+            setupFormListeners();
+            setupCalculationListeners();
+            populateFilters();
+        });
+
+        // Check if Supabase is configured
+        function checkSetup() {
+            const config = localStorage.getItem('seaview_supabase_config');
+            if (config) {
+                const { url, key } = JSON.parse(config);
+                initSupabase(url, key);
+            } else {
+                document.getElementById('setupScreen').classList.remove('hidden');
+            }
+        }
+
+        // Initialize Supabase
+        async function initSupabase(url, key) {
+            try {
+                supabase = window.supabase.createClient(url, key);
+                useSupabase = true;
+                
+                // Check for existing session
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    await handleAuthSuccess(session.user);
+                } else {
+                    showLogin();
+                }
+                
+                // Listen for auth changes
+                supabase.auth.onAuthStateChange(async (event, session) => {
+                    if (event === 'SIGNED_OUT') {
+                        logout();
+                    }
+                });
+                
+                document.getElementById('syncStatus').classList.remove('hidden');
+            } catch (error) {
+                console.error('Supabase init error:', error);
+                showToast('Database connection failed', 'error');
+                showLogin();
+            }
+        }
+
+        // Setup Form
+        document.getElementById('setupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('supabaseUrl').value.trim();
+            const key = document.getElementById('supabaseKey').value.trim();
+            
+            try {
+                // Test connection
+                const testClient = window.supabase.createClient(url, key);
+                await testClient.from('users').select('count').limit(1);
+                
+                // Save config
+                localStorage.setItem('seaview_supabase_config', JSON.stringify({ url, key }));
+                
+                // Initialize tables
+                await initializeTables(testClient);
+                
+                showToast('Database connected successfully!', 'success');
+                document.getElementById('setupScreen').classList.add('hidden');
+                initSupabase(url, key);
+            } catch (error) {
+                console.error('Setup error:', error);
+                showToast('Connection failed. Check your credentials.', 'error');
+            }
+        });
+
+        // Initialize database tables
+        async function initializeTables(client) {
+            // Tables will be created via Supabase dashboard SQL editor
+            // This is just a placeholder - user needs to run SQL script
+            showToast('Please run the SQL setup script in Supabase dashboard', 'info');
+        }
+
+        // Skip setup (use localStorage only)
+        function skipSetup() {
+            useSupabase = false;
+            localStorage.setItem('seaview_local_mode', 'true');
+            document.getElementById('setupScreen').classList.add('hidden');
+            showLogin();
+        }
+
+        // Show screens
+        function showLogin() {
+            document.getElementById('setupScreen').classList.add('hidden');
+            document.getElementById('registerScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('registerScreen').classList.remove('hidden');
+        }
+
+        // Login Form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (useSupabase) {
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    await handleAuthSuccess(data.user);
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            } else {
+                // Local mode
+                const users = JSON.parse(localStorage.getItem('seaview_users') || '[]');
+                const user = users.find(u => u.email === email && u.password === password);
+                if (user) {
+                    currentUser = user;
+                    localStorage.setItem('seaview_current_user', JSON.stringify(user));
+                    showMainApp();
+                } else {
+                    showToast('Invalid credentials', 'error');
+                }
+            }
+        });
+
+        // Register Form
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+            
+            if (useSupabase) {
+                try {
+                    const { data, error } = await supabase.auth.signUp({
+                        email,
+                        password,
+                        options: {
+                            data: { name, role }
+                        }
+                    });
+                    if (error) throw error;
+                    
+                    // Create user profile
+                    await supabase.from('users').insert({
+                        id: data.user.id,
+                        email,
+                        name,
+                        role,
+                        permissions: role === 'admin' ? ['all'] : ['sales']
+                    });
+                    
+                    showToast('Account created! Please sign in.', 'success');
+                    showLogin();
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            } else {
+                // Local mode
+                const users = JSON.parse(localStorage.getItem('seaview_users') || '[]');
+                if (users.find(u => u.email === email)) {
+                    showToast('Email already exists', 'error');
+                    return;
+                }
+                const newUser = { id: Date.now().toString(), email, name, role, password, permissions: role === 'admin' ? ['all'] : ['sales'] };
+                users.push(newUser);
+                localStorage.setItem('seaview_users', JSON.stringify(users));
+                showToast('Account created! Please sign in.', 'success');
+                showLogin();
+            }
+        });
+
+        // Handle successful auth
+        async function handleAuthSuccess(user) {
+            if (useSupabase) {
+                const { data: profile } = await supabase.from('users').select('*').eq('id', user.id).single();
+                currentUser = profile || { id: user.id, email: user.email, name: user.user_metadata?.name || 'User', role: user.user_metadata?.role || 'employee', permissions: ['sales'] };
+            }
+            showMainApp();
+        }
+
+        // Show main app
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('registerScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userRole').textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+            
+            applyPermissions();
+            loadDashboard();
+            
+            if (currentUser.role === 'admin') {
+                showPage('dashboard');
+            } else {
+                showPage('sales');
+            }
+        }
+
+        // Apply permissions
+        function applyPermissions() {
+            const isAdmin = currentUser.role === 'admin';
+            const permissions = currentUser.permissions || ['sales'];
+            
+            // Admin-only sections
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.style.display = isAdmin ? '' : 'none';
+            });
+            
+            // Section permissions for employees
+            if (!isAdmin) {
+                const sections = ['sandwiches', 'vendors', 'expenses', 'payroll', 'reports'];
+                sections.forEach(section => {
+                    const navEl = document.querySelector(`.nav-${section}`);
+                    if (navEl) {
+                        navEl.style.display = permissions.includes(section) || permissions.includes('all') ? '' : 'none';
+                    }
+                });
+            }
+        }
+
+        // Logout
+        async function logout() {
+            if (useSupabase) {
+                await supabase.auth.signOut();
+            }
+            currentUser = null;
+            localStorage.removeItem('seaview_current_user');
+            showLogin();
+        }
+
+        // Page Navigation
+        function showPage(pageName) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`${pageName}Page`).classList.remove('hidden');
+            
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            const activeItem = document.querySelector(`[data-page="${pageName}"]`);
+            if (activeItem) activeItem.classList.add('active');
+            
+            const titles = {
+                dashboard: ['Dashboard', 'Business overview'],
+                sales: ['Daily Sales', 'Track daily sales entries'],
+                sandwiches: ['Sandwich Sales', 'Track sandwich sales'],
+                vendors: ['Vendors', 'Manage vendor expenses'],
+                expenses: ['Expenses', 'Track business expenses'],
+                payroll: ['Payroll', 'Manage employee payroll'],
+                projections: ['Projections', 'Financial projections'],
+                reports: ['Reports', 'Download reports'],
+                settings: ['Settings', 'System settings']
+            };
+            
+            document.getElementById('pageTitle').textContent = titles[pageName][0];
+            document.getElementById('pageSubtitle').textContent = titles[pageName][1];
+            
+            // Load page data
+            switch(pageName) {
+                case 'dashboard': loadDashboard(); break;
+                case 'sales': loadSales(); break;
+                case 'sandwiches': loadSandwiches(); break;
+                case 'vendors': loadVendors(); break;
+                case 'expenses': loadExpenses(); break;
+                case 'payroll': loadPayroll(); break;
+                case 'projections': loadProjections(); break;
+                case 'settings': loadSettings(); break;
+            }
+        }
+
+        // Initialize date display
+        function initializeDateDisplay() {
+            const now = new Date();
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        // Populate filters
+        function populateFilters() {
+            const monthFilter = document.getElementById('salesMonthFilter');
+            const yearFilter = document.getElementById('salesYearFilter');
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            months.forEach((m, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = m;
+                monthFilter.appendChild(opt);
+            });
+            
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear - 2; y <= currentYear + 1; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearFilter.appendChild(opt);
+            }
+        }
+
+        // Setup form listeners
+        function setupFormListeners() {
+            document.getElementById('salesForm').addEventListener('submit', saveSale);
+            document.getElementById('sandwichForm').addEventListener('submit', saveSandwich);
+            document.getElementById('vendorForm').addEventListener('submit', saveVendor);
+            document.getElementById('expenseForm').addEventListener('submit', saveExpense);
+            document.getElementById('payrollForm').addEventListener('submit', savePayroll);
+            document.getElementById('addUserForm').addEventListener('submit', addUser);
+        }
+
+        // Setup calculation listeners
+        function setupCalculationListeners() {
+            // Sales calculations
+            document.getElementById('saleDate').addEventListener('change', (e) => {
+                const date = new Date(e.target.value);
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                document.getElementById('saleDay').value = days[date.getDay()];
+            });
+            
+            ['saleCash', 'saleCredit', 'saleSandAmount', 'saleTax1', 'saleTax2'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calculateSaleTotals);
+            });
+            
+            // Payroll calculations
+            ['payrollRate', 'payrollCashHours', 'payrollCheckHours'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calculatePayroll);
+            });
+        }
+
+        function calculateSaleTotals() {
+            const cash = parseFloat(document.getElementById('saleCash').value) || 0;
+            const credit = parseFloat(document.getElementById('saleCredit').value) || 0;
+            const sandAmount = parseFloat(document.getElementById('saleSandAmount').value) || 0;
+            const tax1 = parseFloat(document.getElementById('saleTax1').value) || 0;
+            const tax2 = parseFloat(document.getElementById('saleTax2').value) || 0;
+            
+            const grossBal = cash + credit;
+            const nTax = tax1 + tax2;
+            const gSale = grossBal - sandAmount;
+            const nSale = gSale - nTax;
+            
+            document.getElementById('saleGrossBal').value = grossBal.toFixed(2);
+            document.getElementById('saleNTax').value = nTax.toFixed(2);
+            document.getElementById('saleGSale').value = gSale.toFixed(2);
+            document.getElementById('saleNSale').value = nSale.toFixed(2);
+        }
+
+        function calculatePayroll() {
+            const rate = parseFloat(document.getElementById('payrollRate').value) || 0;
+            const cashHours = parseFloat(document.getElementById('payrollCashHours').value) || 0;
+            const checkHours = parseFloat(document.getElementById('payrollCheckHours').value) || 0;
+            
+            document.getElementById('payrollCashPay').value = (rate * cashHours).toFixed(2);
+            document.getElementById('payrollCheckPay').value = (rate * checkHours).toFixed(2);
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            // Reset form
+            const form = document.querySelector(`#${modalId} form`);
+            if (form) form.reset();
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500',
+                warning: 'bg-yellow-500'
+            };
+            toast.className = `toast ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // Toggle sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        // ============ DATA OPERATIONS ============
+
+        // Generic data operations
+        async function getData(table) {
+            if (useSupabase) {
+                const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                return data || [];
+            } else {
+                return JSON.parse(localStorage.getItem(`seaview_${table}`) || '[]');
+            }
+        }
+
+        async function saveData(table, record) {
+            if (useSupabase) {
+                if (record.id) {
+                    const { error } = await supabase.from(table).update(record).eq('id', record.id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabase.from(table).insert(record);
+                    if (error) throw error;
+                }
+            } else {
+                const data = JSON.parse(localStorage.getItem(`seaview_${table}`) || '[]');
+                if (record.id) {
+                    const index = data.findIndex(d => d.id === record.id);
+                    if (index >= 0) data[index] = record;
+                } else {
+                    record.id = Date.now().toString();
+                    record.created_at = new Date().toISOString();
+                    data.unshift(record);
+                }
+                localStorage.setItem(`seaview_${table}`, JSON.stringify(data));
+            }
+        }
+
+        async function deleteData(table, id) {
+            if (useSupabase) {
+                const { error } = await supabase.from(table).delete().eq('id', id);
+                if (error) throw error;
+            } else {
+                const data = JSON.parse(localStorage.getItem(`seaview_${table}`) || '[]');
+                const filtered = data.filter(d => d.id !== id);
+                localStorage.setItem(`seaview_${table}`, JSON.stringify(filtered));
+            }
+        }
+
+        // ============ SALES ============
+        async function loadSales() {
+            try {
+                let sales = await getData('sales');
+                
+                const monthFilter = document.getElementById('salesMonthFilter').value;
+                const yearFilter = document.getElementById('salesYearFilter').value;
+                
+                if (monthFilter || yearFilter) {
+                    sales = sales.filter(s => {
+                        const date = new Date(s.date);
+                        if (monthFilter && date.getMonth() !== parseInt(monthFilter)) return false;
+                        if (yearFilter && date.getFullYear() !== parseInt(yearFilter)) return false;
+                        return true;
+                    });
+                    
+                    // Show monthly summary
+                    const summary = document.getElementById('monthlySummary');
+                    summary.classList.remove('hidden');
+                    
+                    const totals = sales.reduce((acc, s) => ({
+                        cash: acc.cash + (s.cash || 0),
+                        credit: acc.credit + (s.credit || 0),
+                        grossBal: acc.grossBal + (s.gross_bal || 0),
+                        sandwich: acc.sandwich + (s.sand_amount || 0),
+                        gSale: acc.gSale + (s.g_sale || 0),
+                        nSale: acc.nSale + (s.n_sale || 0)
+                    }), { cash: 0, credit: 0, grossBal: 0, sandwich: 0, gSale: 0, nSale: 0 });
+                    
+                    document.getElementById('sumCash').textContent = '$' + totals.cash.toFixed(2);
+                    document.getElementById('sumCredit').textContent = '$' + totals.credit.toFixed(2);
+                    document.getElementById('sumGrossBal').textContent = '$' + totals.grossBal.toFixed(2);
+                    document.getElementById('sumSandwich').textContent = '$' + totals.sandwich.toFixed(2);
+                    document.getElementById('sumGSale').textContent = '$' + totals.gSale.toFixed(2);
+                    document.getElementById('sumNSale').textContent = '$' + totals.nSale.toFixed(2);
+                } else {
+                    document.getElementById('monthlySummary').classList.add('hidden');
+                }
+                
+                const tbody = document.getElementById('salesTableBody');
+                tbody.innerHTML = sales.map(s => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm">${s.date}</td>
+                        <td class="px-4 py-3 text-sm">${s.day}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(s.cash || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(s.credit || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right font-medium">$${(s.gross_bal || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">${s.sand_count || 0}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(s.sand_amount || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(s.tax1 || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(s.tax2 || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(s.n_tax || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right font-medium">$${(s.g_sale || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right font-medium text-green-600">$${(s.n_sale || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="editSale('${s.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                            <button onclick="deleteSale('${s.id}')" class="text-red-600 hover:text-red-800">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Load sales error:', error);
+                showToast('Failed to load sales', 'error');
+            }
+        }
+
+        async function saveSale(e) {
+            e.preventDefault();
+            const sale = {
+                id: document.getElementById('saleId').value || null,
+                date: document.getElementById('saleDate').value,
+                day: document.getElementById('saleDay').value,
+                cash: parseFloat(document.getElementById('saleCash').value) || 0,
+                credit: parseFloat(document.getElementById('saleCredit').value) || 0,
+                gross_bal: parseFloat(document.getElementById('saleGrossBal').value) || 0,
+                sand_count: parseInt(document.getElementById('saleSandCount').value) || 0,
+                sand_amount: parseFloat(document.getElementById('saleSandAmount').value) || 0,
+                tax1: parseFloat(document.getElementById('saleTax1').value) || 0,
+                tax2: parseFloat(document.getElementById('saleTax2').value) || 0,
+                n_tax: parseFloat(document.getElementById('saleNTax').value) || 0,
+                g_sale: parseFloat(document.getElementById('saleGSale').value) || 0,
+                n_sale: parseFloat(document.getElementById('saleNSale').value) || 0
+            };
+            
+            try {
+                await saveData('sales', sale);
+                closeModal('salesModal');
+                loadSales();
+                loadDashboard();
+                showToast('Sale saved successfully', 'success');
+            } catch (error) {
+                showToast('Failed to save sale', 'error');
+            }
+        }
+
+        async function editSale(id) {
+            const sales = await getData('sales');
+            const sale = sales.find(s => s.id === id);
+            if (sale) {
+                document.getElementById('saleId').value = sale.id;
+                document.getElementById('saleDate').value = sale.date;
+                document.getElementById('saleDay').value = sale.day;
+                document.getElementById('saleCash').value = sale.cash;
+                document.getElementById('saleCredit').value = sale.credit;
+                document.getElementById('saleGrossBal').value = sale.gross_bal;
+                document.getElementById('saleSandCount').value = sale.sand_count;
+                document.getElementById('saleSandAmount').value = sale.sand_amount;
+                document.getElementById('saleTax1').value = sale.tax1;
+                document.getElementById('saleTax2').value = sale.tax2;
+                document.getElementById('saleNTax').value = sale.n_tax;
+                document.getElementById('saleGSale').value = sale.g_sale;
+                document.getElementById('saleNSale').value = sale.n_sale;
+                document.getElementById('salesModalTitle').textContent = 'Edit Sale';
+                openModal('salesModal');
+            }
+        }
+
+        async function deleteSale(id) {
+            if (confirm('Delete this sale entry?')) {
+                await deleteData('sales', id);
+                loadSales();
+                loadDashboard();
+                showToast('Sale deleted', 'success');
+            }
+        }
+
+        // ============ SANDWICHES ============
+        async function loadSandwiches() {
+            try {
+                let sandwiches = await getData('sandwiches');
+                const dateFilter = document.getElementById('sandwichDateFilter').value;
+                if (dateFilter) {
+                    sandwiches = sandwiches.filter(s => s.date === dateFilter);
+                }
+                
+                const tbody = document.getElementById('sandwichTableBody');
+                tbody.innerHTML = sandwiches.map(s => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm">${s.name}</td>
+                        <td class="px-6 py-4 text-sm">${s.date}</td>
+                        <td class="px-6 py-4 text-sm text-right">${s.quantity}</td>
+                        <td class="px-6 py-4 text-sm text-right font-medium">$${(s.total || 0).toFixed(2)}</td>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="editSandwich('${s.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                            <button onclick="deleteSandwich('${s.id}')" class="text-red-600 hover:text-red-800">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showToast('Failed to load sandwiches', 'error');
+            }
+        }
+
+        async function saveSandwich(e) {
+            e.preventDefault();
+            const sandwich = {
+                id: document.getElementById('sandwichId').value || null,
+                name: document.getElementById('sandwichName').value,
+                date: document.getElementById('sandwichDate').value,
+                quantity: parseInt(document.getElementById('sandwichQty').value) || 0,
+                total: parseFloat(document.getElementById('sandwichTotal').value) || 0
+            };
+            
+            await saveData('sandwiches', sandwich);
+            closeModal('sandwichModal');
+            loadSandwiches();
+            showToast('Sandwich sale saved', 'success');
+        }
+
+        async function editSandwich(id) {
+            const sandwiches = await getData('sandwiches');
+            const s = sandwiches.find(x => x.id === id);
+            if (s) {
+                document.getElementById('sandwichId').value = s.id;
+                document.getElementById('sandwichName').value = s.name;
+                document.getElementById('sandwichDate').value = s.date;
+                document.getElementById('sandwichQty').value = s.quantity;
+                document.getElementById('sandwichTotal').value = s.total;
+                document.getElementById('sandwichModalTitle').textContent = 'Edit Sandwich Sale';
+                openModal('sandwichModal');
+            }
+        }
+
+        async function deleteSandwich(id) {
+            if (confirm('Delete this sandwich entry?')) {
+                await deleteData('sandwiches', id);
+                loadSandwiches();
+                showToast('Sandwich deleted', 'success');
+            }
+        }
+
+        // ============ VENDORS ============
+        async function loadVendors() {
+            try {
+                const vendors = await getData('vendors');
+                const tbody = document.getElementById('vendorTableBody');
+                tbody.innerHTML = vendors.map(v => {
+                    const total = (v.week1 || 0) + (v.week2 || 0) + (v.week3 || 0) + (v.week4 || 0);
+                    return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm font-medium">${v.name}</td>
+                        <td class="px-4 py-3 text-sm">${v.phone || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(v.week1 || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(v.week2 || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(v.week3 || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(v.week4 || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right font-semibold">$${total.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${v.remarks || '-'}</td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="editVendor('${v.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                            <button onclick="deleteVendor('${v.id}')" class="text-red-600 hover:text-red-800">Delete</button>
+                        </td>
+                    </tr>
+                `}).join('');
+            } catch (error) {
+                showToast('Failed to load vendors', 'error');
+            }
+        }
+
+        async function saveVendor(e) {
+            e.preventDefault();
+            const vendor = {
+                id: document.getElementById('vendorId').value || null,
+                name: document.getElementById('vendorName').value,
+                phone: document.getElementById('vendorPhone').value,
+                week1: parseFloat(document.getElementById('vendorWeek1').value) || 0,
+                week2: parseFloat(document.getElementById('vendorWeek2').value) || 0,
+                week3: parseFloat(document.getElementById('vendorWeek3').value) || 0,
+                week4: parseFloat(document.getElementById('vendorWeek4').value) || 0,
+                remarks: document.getElementById('vendorRemarks').value
+            };
+            
+            await saveData('vendors', vendor);
+            closeModal('vendorModal');
+            loadVendors();
+            showToast('Vendor saved', 'success');
+        }
+
+        async function editVendor(id) {
+            const vendors = await getData('vendors');
+            const v = vendors.find(x => x.id === id);
+            if (v) {
+                document.getElementById('vendorId').value = v.id;
+                document.getElementById('vendorName').value = v.name;
+                document.getElementById('vendorPhone').value = v.phone || '';
+                document.getElementById('vendorWeek1').value = v.week1 || 0;
+                document.getElementById('vendorWeek2').value = v.week2 || 0;
+                document.getElementById('vendorWeek3').value = v.week3 || 0;
+                document.getElementById('vendorWeek4').value = v.week4 || 0;
+                document.getElementById('vendorRemarks').value = v.remarks || '';
+                document.getElementById('vendorModalTitle').textContent = 'Edit Vendor';
+                openModal('vendorModal');
+            }
+        }
+
+        async function deleteVendor(id) {
+            if (confirm('Delete this vendor?')) {
+                await deleteData('vendors', id);
+                loadVendors();
+                showToast('Vendor deleted', 'success');
+            }
+        }
+
+        // ============ EXPENSES ============
+        async function loadExpenses() {
+            try {
+                let expenses = await getData('expenses');
+                const monthFilter = document.getElementById('expenseMonthFilter').value;
+                if (monthFilter) {
+                    expenses = expenses.filter(e => e.date.startsWith(monthFilter));
+                }
+                
+                const tbody = document.getElementById('expenseTableBody');
+                tbody.innerHTML = expenses.map(e => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm">${e.date}</td>
+                        <td class="px-6 py-4 text-sm">${e.reason}</td>
+                        <td class="px-6 py-4 text-sm text-right font-medium text-red-600">$${(e.amount || 0).toFixed(2)}</td>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="editExpense('${e.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                            <button onclick="deleteExpense('${e.id}')" class="text-red-600 hover:text-red-800">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                const total = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+                document.getElementById('totalExpenseSum').textContent = '$' + total.toFixed(2);
+            } catch (error) {
+                showToast('Failed to load expenses', 'error');
+            }
+        }
+
+        async function saveExpense(e) {
+            e.preventDefault();
+            const expense = {
+                id: document.getElementById('expenseId').value || null,
+                date: document.getElementById('expenseDate').value,
+                reason: document.getElementById('expenseReason').value,
+                amount: parseFloat(document.getElementById('expenseAmount').value) || 0
+            };
+            
+            await saveData('expenses', expense);
+            closeModal('expenseModal');
+            loadExpenses();
+            loadDashboard();
+            showToast('Expense saved', 'success');
+        }
+
+        async function editExpense(id) {
+            const expenses = await getData('expenses');
+            const e = expenses.find(x => x.id === id);
+            if (e) {
+                document.getElementById('expenseId').value = e.id;
+                document.getElementById('expenseDate').value = e.date;
+                document.getElementById('expenseReason').value = e.reason;
+                document.getElementById('expenseAmount').value = e.amount;
+                document.getElementById('expenseModalTitle').textContent = 'Edit Expense';
+                openModal('expenseModal');
+            }
+        }
+
+        async function deleteExpense(id) {
+            if (confirm('Delete this expense?')) {
+                await deleteData('expenses', id);
+                loadExpenses();
+                loadDashboard();
+                showToast('Expense deleted', 'success');
+            }
+        }
+
+        // ============ PAYROLL ============
+        async function loadPayroll() {
+            try {
+                let payroll = await getData('payroll');
+                const monthFilter = document.getElementById('payrollMonthFilter').value;
+                if (monthFilter) {
+                    payroll = payroll.filter(p => p.date.startsWith(monthFilter));
+                }
+                
+                const tbody = document.getElementById('payrollTableBody');
+                tbody.innerHTML = payroll.map(p => {
+                    const totalPay = (p.cash_pay || 0) + (p.check_pay || 0);
+                    return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm font-medium">${p.name}</td>
+                        <td class="px-4 py-3 text-sm">${p.date}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(p.rate || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">${p.cash_hours || 0}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(p.cash_pay || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right">${p.check_hours || 0}</td>
+                        <td class="px-4 py-3 text-sm text-right">$${(p.check_pay || 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-sm text-right font-semibold text-blue-600">$${totalPay.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="editPayroll('${p.id}')" class="text-blue-600 hover:text-blue-800 mr-2">Edit</button>
+                            <button onclick="deletePayroll('${p.id}')" class="text-red-600 hover:text-red-800">Delete</button>
+                        </td>
+                    </tr>
+                `}).join('');
+                
+                const total = payroll.reduce((sum, p) => sum + (p.cash_pay || 0) + (p.check_pay || 0), 0);
+                document.getElementById('totalPayrollSum').textContent = '$' + total.toFixed(2);
+            } catch (error) {
+                showToast('Failed to load payroll', 'error');
+            }
+        }
+
+        async function savePayroll(e) {
+            e.preventDefault();
+            const payroll = {
+                id: document.getElementById('payrollId').value || null,
+                name: document.getElementById('payrollName').value,
+                date: document.getElementById('payrollDate').value,
+                rate: parseFloat(document.getElementById('payrollRate').value) || 0,
+                cash_hours: parseFloat(document.getElementById('payrollCashHours').value) || 0,
+                cash_pay: parseFloat(document.getElementById('payrollCashPay').value) || 0,
+                check_hours: parseFloat(document.getElementById('payrollCheckHours').value) || 0,
+                check_pay: parseFloat(document.getElementById('payrollCheckPay').value) || 0
+            };
+            
+            await saveData('payroll', payroll);
+            closeModal('payrollModal');
+            loadPayroll();
+            showToast('Payroll saved', 'success');
+        }
+
+        async function editPayroll(id) {
+            const payrolls = await getData('payroll');
+            const p = payrolls.find(x => x.id === id);
+            if (p) {
+                document.getElementById('payrollId').value = p.id;
+                document.getElementById('payrollName').value = p.name;
+                document.getElementById('payrollDate').value = p.date;
+                document.getElementById('payrollRate').value = p.rate;
+                document.getElementById('payrollCashHours').value = p.cash_hours;
+                document.getElementById('payrollCashPay').value = p.cash_pay;
+                document.getElementById('payrollCheckHours').value = p.check_hours;
+                document.getElementById('payrollCheckPay').value = p.check_pay;
+                document.getElementById('payrollModalTitle').textContent = 'Edit Payroll';
+                openModal('payrollModal');
+            }
+        }
+
+        async function deletePayroll(id) {
+            if (confirm('Delete this payroll entry?')) {
+                await deleteData('payroll', id);
+                loadPayroll();
+                showToast('Payroll deleted', 'success');
+            }
+        }
+
+        // ============ DASHBOARD ============
+        async function loadDashboard() {
+            try {
+                const sales = await getData('sales');
+                const expenses = await getData('expenses');
+                
+                const today = new Date().toISOString().split('T')[0];
+                const currentMonth = today.substring(0, 7);
+                
+                const todaySale = sales.find(s => s.date === today);
+                const monthSales = sales.filter(s => s.date.startsWith(currentMonth));
+                const monthExpenses = expenses.filter(e => e.date.startsWith(currentMonth));
+                
+                const todayGross = todaySale ? todaySale.g_sale : 0;
+                const monthlyNet = monthSales.reduce((sum, s) => sum + (s.n_sale || 0), 0);
+                const totalExp = monthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+                const profit = monthlyNet - totalExp;
+                
+                document.getElementById('todayGrossSales').textContent = '$' + todayGross.toFixed(2);
+                document.getElementById('monthlyNetSales').textContent = '$' + monthlyNet.toFixed(2);
+                document.getElementById('totalExpenses').textContent = '$' + totalExp.toFixed(2);
+                document.getElementById('netProfit').textContent = '$' + profit.toFixed(2);
+                document.getElementById('netProfit').className = `text-2xl font-bold mt-1 ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+                
+                // Charts
+                loadSalesChart(sales);
+                loadExpenseChart(expenses);
+            } catch (error) {
+                console.error('Dashboard error:', error);
+            }
+        }
+
+        function loadSalesChart(sales) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            const last7Days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                last7Days.push(d.toISOString().split('T')[0]);
+            }
+            
+            const data = last7Days.map(date => {
+                const sale = sales.find(s => s.date === date);
+                return sale ? sale.g_sale : 0;
+            });
+            
+            if (salesChart) salesChart.destroy();
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: last7Days.map(d => new Date(d).toLocaleDateString('en-US', { weekday: 'short' })),
+                    datasets: [{
+                        label: 'Gross Sales',
+                        data: data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function loadExpenseChart(expenses) {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            const currentMonth = new Date().toISOString().substring(0, 7);
+            const monthExpenses = expenses.filter(e => e.date.startsWith(currentMonth));
+            
+            const byReason = {};
+            monthExpenses.forEach(e => {
+                byReason[e.reason] = (byReason[e.reason] || 0) + e.amount;
+            });
+            
+            if (expenseChart) expenseChart.destroy();
+            expenseChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(byReason).slice(0, 5),
+                    datasets: [{
+                        data: Object.values(byReason).slice(0, 5),
+                        backgroundColor: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6']
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        // ============ PROJECTIONS ============
+        async function loadProjections() {
+            const sales = await getData('sales');
+            const expenses = await getData('expenses');
+            
+            const now = new Date();
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            document.getElementById('lastMonthTitle').textContent = months[lastMonth.getMonth()] + ' ' + lastMonth.getFullYear();
+            document.getElementById('currentMonthTitle').textContent = months[now.getMonth()] + ' ' + now.getFullYear();
+            document.getElementById('nextMonthTitle').textContent = months[nextMonth.getMonth()] + ' ' + nextMonth.getFullYear() + ' (Projected)';
+            
+            const getMonthData = (year, month) => {
+                const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+                const mSales = sales.filter(s => s.date.startsWith(prefix));
+                const mExpenses = expenses.filter(e => e.date.startsWith(prefix));
+                
+                return {
+                    gross: mSales.reduce((sum, s) => sum + (s.g_sale || 0), 0),
+                    net: mSales.reduce((sum, s) => sum + (s.n_sale || 0), 0),
+                    expenses: mExpenses.reduce((sum, e) => sum + (e.amount || 0), 0)
+                };
+            };
+            
+            const last = getMonthData(lastMonth.getFullYear(), lastMonth.getMonth());
+            const current = getMonthData(now.getFullYear(), now.getMonth());
+            
+            // Project next month based on average of last 2 months
+            const avgGross = (last.gross + current.gross) / 2;
+            const avgNet = (last.net + current.net) / 2;
+            const avgExp = (last.expenses + current.expenses) / 2;
+            
+            document.getElementById('lastGross').textContent = '$' + last.gross.toFixed(2);
+            document.getElementById('lastNet').textContent = '$' + last.net.toFixed(2);
+            document.getElementById('lastExpenses').textContent = '$' + last.expenses.toFixed(2);
+            document.getElementById('lastProfit').textContent = '$' + (last.net - last.expenses).toFixed(2);
+            
+            document.getElementById('currentGross').textContent = '$' + current.gross.toFixed(2);
+            document.getElementById('currentNet').textContent = '$' + current.net.toFixed(2);
+            document.getElementById('currentExpenses').textContent = '$' + current.expenses.toFixed(2);
+            document.getElementById('currentProfit').textContent = '$' + (current.net - current.expenses).toFixed(2);
+            
+            document.getElementById('nextGross').textContent = '$' + avgGross.toFixed(2);
+            document.getElementById('nextNet').textContent = '$' + avgNet.toFixed(2);
+            document.getElementById('nextExpenses').textContent = '$' + avgExp.toFixed(2);
+            document.getElementById('nextProfit').textContent = '$' + (avgNet - avgExp).toFixed(2);
+            
+            // Chart
+            const ctx = document.getElementById('projectionChart').getContext('2d');
+            if (projectionChart) projectionChart.destroy();
+            projectionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Last Month', 'Current Month', 'Next Month (Proj)'],
+                    datasets: [
+                        { label: 'Gross Sales', data: [last.gross, current.gross, avgGross], backgroundColor: '#3b82f6' },
+                        { label: 'Net Sales', data: [last.net, current.net, avgNet], backgroundColor: '#10b981' },
+                        { label: 'Expenses', data: [last.expenses, current.expenses, avgExp], backgroundColor: '#ef4444' }
+                    ]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        // ============ SETTINGS ============
+        async function loadSettings() {
+            // Load users
+            let users = [];
+            if (useSupabase) {
+                const { data } = await supabase.from('users').select('*');
+                users = data || [];
+            } else {
+                users = JSON.parse(localStorage.getItem('seaview_users') || '[]');
+            }
+            
+            // Users table
+            const usersBody = document.getElementById('usersTableBody');
+            usersBody.innerHTML = users.map(u => `
+                <tr>
+                    <td class="px-4 py-3 text-sm">${u.name}</td>
+                    <td class="px-4 py-3 text-sm">${u.email}</td>
+                    <td class="px-4 py-3 text-sm">
+                        <span class="px-2 py-1 text-xs rounded-full ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}">${u.role}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        ${u.id !== currentUser.id ? `<button onclick="deleteUser('${u.id}')" class="text-red-600 hover:text-red-800 text-sm">Delete</button>` : '<span class="text-gray-400 text-sm">Current</span>'}
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Employee access control
+            const employees = users.filter(u => u.role === 'employee');
+            const accessList = document.getElementById('employeeAccessList');
+            accessList.innerHTML = employees.map(emp => `
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="font-medium mb-2">${emp.name}</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${['sandwiches', 'vendors', 'expenses', 'payroll', 'reports'].map(section => `
+                            <label class="flex items-center gap-1 text-sm">
+                                <input type="checkbox" ${(emp.permissions || []).includes(section) ? 'checked' : ''} onchange="updatePermission('${emp.id}', '${section}', this.checked)">
+                                ${section.charAt(0).toUpperCase() + section.slice(1)}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('') || '<p class="text-gray-500 text-sm">No employees to manage</p>';
+            
+            // Connection status
+            document.getElementById('dbStatus').innerHTML = useSupabase 
+                ? `<div class="flex items-center gap-2 text-green-700"><span class="w-3 h-3 bg-green-500 rounded-full"></span><span>Connected to Supabase</span></div>`
+                : `<div class="flex items-center gap-2 text-yellow-700"><span class="w-3 h-3 bg-yellow-500 rounded-full"></span><span>Local Storage Mode (Not Synced)</span></div>`;
+        }
+
+        async function updatePermission(userId, section, granted) {
+            let users = [];
+            if (useSupabase) {
+                const { data } = await supabase.from('users').select('*').eq('id', userId).single();
+                const perms = data.permissions || [];
+                if (granted && !perms.includes(section)) perms.push(section);
+                if (!granted) perms.splice(perms.indexOf(section), 1);
+                await supabase.from('users').update({ permissions: perms }).eq('id', userId);
+            } else {
+                users = JSON.parse(localStorage.getItem('seaview_users') || '[]');
+                const user = users.find(u => u.id === userId);
+                if (user) {
+                    user.permissions = user.permissions || [];
+                    if (granted && !user.permissions.includes(section)) user.permissions.push(section);
+                    if (!granted) user.permissions.splice(user.permissions.indexOf(section), 1);
+                    localStorage.setItem('seaview_users', JSON.stringify(users));
+                }
+            }
+            showToast('Permission updated', 'success');
+        }
+
+        async function addUser(e) {
+            e.preventDefault();
+            const name = document.getElementById('newUserName').value;
+            const email = document.getElementById('newUserEmail').value;
+            const password = document.getElementById('newUserPassword').value;
+            const role = document.getElementById('newUserRole').value;
+            
+            if (useSupabase) {
+                try {
+                    const { data, error } = await supabase.auth.admin.createUser({
+                        email,
+                        password,
+                        email_confirm: true,
+                        user_metadata: { name, role }
+                    });
+                    if (error) throw error;
+                    
+                    await supabase.from('users').insert({
+                        id: data.user.id,
+                        email,
+                        name,
+                        role,
+                        permissions: role === 'admin' ? ['all'] : ['sales']
+                    });
+                    
+                    showToast('User created', 'success');
+                } catch (error) {
+                    // Fallback: just add to users table
+                    await supabase.from('users').insert({
+                        email,
+                        name,
+                        role,
+                        permissions: role === 'admin' ? ['all'] : ['sales']
+                    });
+                    showToast('User added (they need to sign up with this email)', 'info');
+                }
+            } else {
+                const users = JSON.parse(localStorage.getItem('seaview_users') || '[]');
+                users.push({ id: Date.now().toString(), email, name, role, password, permissions: role === 'admin' ? ['all'] : ['sales'] });
+                localStorage.setItem('seaview_users', JSON.stringify(users));
+                showToast('User created', 'success');
+            }
+            
+            closeModal('addUserModal');
+            loadSettings();
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Delete this user?')) return;
+            
+            if (useSupabase) {
+                await supabase.from('users').delete().eq('id', id);
+            } else {
+                const users = JSON.parse(localStorage.getItem('seaview_users') || '[]');
+                localStorage.setItem('seaview_users', JSON.stringify(users.filter(u => u.id !== id)));
+            }
+            
+            loadSettings();
+            showToast('User deleted', 'success');
+        }
+
+        function resetDatabase() {
+            if (confirm('This will disconnect from Supabase. Continue?')) {
+                localStorage.removeItem('seaview_supabase_config');
+                location.reload();
+            }
+        }
+
+        // ============ EXPORTS ============
+        async function exportSalesToExcel() {
+            const sales = await getData('sales');
+            const ws = XLSX.utils.json_to_sheet(sales.map(s => ({
+                Date: s.date,
+                Day: s.day,
+                Cash: s.cash,
+                Credit: s.credit,
+                'Gross Bal': s.gross_bal,
+                'Sand #': s.sand_count,
+                'Sand $': s.sand_amount,
+                'Tax 1': s.tax1,
+                'Tax 2': s.tax2,
+                'N Tax': s.n_tax,
+                'G Sale': s.g_sale,
+                'N Sale': s.n_sale
+            })));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Sales');
+            XLSX.writeFile(wb, 'seaview_sales.xlsx');
+            showToast('Sales exported', 'success');
+        }
+
+        async function exportSalesToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l');
+            const sales = await getData('sales');
+            
+            doc.text('Seaview Marketplace - Sales Report', 14, 15);
+            doc.autoTable({
+                startY: 25,
+                head: [['Date', 'Day', 'Cash', 'Credit', 'Gross', 'Sand#', 'Sand$', 'Tax1', 'Tax2', 'NTax', 'GSale', 'NSale']],
+                body: sales.map(s => [s.date, s.day, s.cash, s.credit, s.gross_bal, s.sand_count, s.sand_amount, s.tax1, s.tax2, s.n_tax, s.g_sale, s.n_sale]),
+                styles: { fontSize: 8 }
+            });
+            doc.save('seaview_sales.pdf');
+            showToast('PDF exported', 'success');
+        }
+
+        async function exportVendorsToExcel() {
+            const vendors = await getData('vendors');
+            const ws = XLSX.utils.json_to_sheet(vendors.map(v => ({
+                Name: v.name,
+                Phone: v.phone,
+                'Week 1': v.week1,
+                'Week 2': v.week2,
+                'Week 3': v.week3,
+                'Week 4': v.week4,
+                Total: (v.week1||0) + (v.week2||0) + (v.week3||0) + (v.week4||0),
+                Remarks: v.remarks
+            })));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Vendors');
+            XLSX.writeFile(wb, 'seaview_vendors.xlsx');
+        }
+
+        async function exportVendorsToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const vendors = await getData('vendors');
+            
+            doc.text('Seaview Marketplace - Vendor Report', 14, 15);
+            doc.autoTable({
+                startY: 25,
+                head: [['Name', 'Phone', 'Week1', 'Week2', 'Week3', 'Week4', 'Total', 'Remarks']],
+                body: vendors.map(v => [v.name, v.phone, v.week1, v.week2, v.week3, v.week4, (v.week1||0)+(v.week2||0)+(v.week3||0)+(v.week4||0), v.remarks])
+            });
+            doc.save('seaview_vendors.pdf');
+        }
+
+        async function exportExpensesToExcel() {
+            const expenses = await getData('expenses');
+            const ws = XLSX.utils.json_to_sheet(expenses.map(e => ({
+                Date: e.date,
+                'Reason/Vendor': e.reason,
+                Amount: e.amount
+            })));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
+            XLSX.writeFile(wb, 'seaview_expenses.xlsx');
+        }
+
+        async function exportExpensesToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const expenses = await getData('expenses');
+            
+            doc.text('Seaview Marketplace - Expense Report', 14, 15);
+            doc.autoTable({
+                startY: 25,
+                head: [['Date', 'Reason/Vendor', 'Amount']],
+                body: expenses.map(e => [e.date, e.reason, '$' + e.amount.toFixed(2)])
+            });
+            doc.save('seaview_expenses.pdf');
+        }
+
+        async function exportPayrollToExcel() {
+            const payroll = await getData('payroll');
+            const ws = XLSX.utils.json_to_sheet(payroll.map(p => ({
+                Name: p.name,
+                Date: p.date,
+                'Pay Rate': p.rate,
+                'Cash Hours': p.cash_hours,
+                'Cash Pay': p.cash_pay,
+                'Check Hours': p.check_hours,
+                'Check Pay': p.check_pay,
+                'Total Pay': (p.cash_pay||0) + (p.check_pay||0)
+            })));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Payroll');
+            XLSX.writeFile(wb, 'seaview_payroll.xlsx');
+        }
+
+        async function exportPayrollToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const payroll = await getData('payroll');
+            
+            doc.text('Seaview Marketplace - Payroll Report', 14, 15);
+            doc.autoTable({
+                startY: 25,
+                head: [['Name', 'Date', 'Rate', 'Cash Hrs', 'Cash Pay', 'Check Hrs', 'Check Pay', 'Total']],
+                body: payroll.map(p => [p.name, p.date, p.rate, p.cash_hours, p.cash_pay, p.check_hours, p.check_pay, (p.cash_pay||0)+(p.check_pay||0)])
+            });
+            doc.save('seaview_payroll.pdf');
+        }
+
+        async function exportFullReport() {
+            const wb = XLSX.utils.book_new();
+            
+            const sales = await getData('sales');
+            const vendors = await getData('vendors');
+            const expenses = await getData('expenses');
+            const payroll = await getData('payroll');
+            const sandwiches = await getData('sandwiches');
+            
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sales), 'Sales');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sandwiches), 'Sandwiches');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(vendors), 'Vendors');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expenses), 'Expenses');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(payroll), 'Payroll');
+            
+            XLSX.writeFile(wb, 'seaview_full_report.xlsx');
+            showToast('Full report exported', 'success');
+        }
+    </script>
+</body>
+</html>
